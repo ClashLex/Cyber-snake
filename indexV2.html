@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberSnake+</title>
+
+<style>
+:root {
+    --neon-green: #39ff14;
+    --bg-color: #050505;
+}
+
+body {
+    margin:0;
+    background:var(--bg-color);
+    color:var(--neon-green);
+    font-family:Courier New;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+#game-container {
+    position:relative;
+    border:2px solid var(--neon-green);
+}
+
+canvas {
+    background:#000;
+}
+
+#menu-overlay {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:#000;
+    padding:20px;
+    text-align:center;
+}
+
+.btn {
+    display:block;
+    margin:10px 0;
+    padding:10px;
+    border:2px solid var(--neon-green);
+    background:none;
+    color:var(--neon-green);
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game-container">
+<canvas id="gameCanvas"></canvas>
+
+<div id="menu-overlay">
+<h1>CYBERSNAKE+</h1>
+
+<p>Difficulty</p>
+<button class="btn" onclick="setDifficulty('EASY')">EASY</button>
+<button class="btn" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
+<button class="btn" onclick="setDifficulty('HARD')">HARD</button>
+
+<p>Theme</p>
+<button class="btn" onclick="setTheme('green')">GREEN</button>
+<button class="btn" onclick="setTheme('blue')">BLUE</button>
+<button class="btn" onclick="setTheme('pink')">PINK</button>
+
+<button class="btn" onclick="startGame()">START</button>
+
+<div id="leaderboard"></div>
+</div>
+
+</div>
+
+<script>
+// ===== CANVAS =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = 400;
+canvas.height = 400;
+
+const GRID = 20;
+const TILE = canvas.width / GRID;
+
+// ===== DIFFICULTY =====
+const DIFFICULTY = {
+    EASY: 140,
+    MEDIUM: 100,
+    HARD: 70
+};
+let speed = DIFFICULTY.MEDIUM;
+
+function setDifficulty(level){
+    speed = DIFFICULTY[level];
+}
+
+// ===== THEME =====
+function setTheme(theme){
+    const root = document.documentElement;
+
+    if(theme==='green') root.style.setProperty('--neon-green','#39ff14');
+    if(theme==='blue') root.style.setProperty('--neon-green','#00ffff');
+    if(theme==='pink') root.style.setProperty('--neon-green','#ff00ff');
+}
+
+// ===== GAME STATE =====
+let snake, food, dx, dy, score, loop;
+let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+
+// ===== START =====
+function startGame(){
+    document.getElementById('menu-overlay').style.display='none';
+
+    snake = [{x:10,y:10}];
+    dx = 1; dy = 0;
+    score = 0;
+
+    placeFood();
+
+    clearInterval(loop);
+    loop = setInterval(gameLoop, speed);
+}
+
+// ===== LOOP =====
+function gameLoop(){
+    update();
+    draw();
+}
+
+// ===== UPDATE =====
+function update(){
+    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+    // wall wrap
+    head.x = (head.x + GRID) % GRID;
+    head.y = (head.y + GRID) % GRID;
+
+    // self collision
+    for(let s of snake){
+        if(s.x===head.x && s.y===head.y){
+            gameOver();
+            return;
+        }
+    }
+
+    snake.unshift(head);
+
+    if(head.x===food.x && head.y===food.y){
+        score++;
+        placeFood();
+    } else {
+        snake.pop();
+    }
+}
+
+// ===== DRAW =====
+function draw(){
+    ctx.fillStyle="#000";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle=getComputedStyle(document.documentElement)
+        .getPropertyValue('--neon-green');
+
+    snake.forEach(s=>{
+        ctx.fillRect(s.x*TILE, s.y*TILE, TILE-2, TILE-2);
+    });
+
+    ctx.fillStyle="red";
+    ctx.fillRect(food.x*TILE, food.y*TILE, TILE-2, TILE-2);
+}
+
+// ===== FOOD =====
+function placeFood(){
+    food = {
+        x: Math.floor(Math.random()*GRID),
+        y: Math.floor(Math.random()*GRID)
+    };
+}
+
+// ===== GAME OVER =====
+function gameOver(){
+    clearInterval(loop);
+
+    leaderboard.push(score);
+    leaderboard.sort((a,b)=>b-a);
+    leaderboard = leaderboard.slice(0,5);
+
+    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+
+    showLeaderboard();
+
+    document.getElementById('menu-overlay').style.display='block';
+}
+
+// ===== LEADERBOARD =====
+function showLeaderboard(){
+    const board = document.getElementById('leaderboard');
+
+    board.innerHTML = "<h3>TOP SCORES</h3>" +
+        leaderboard.map((s,i)=>`<p>${i+1}. ${s}</p>`).join('');
+}
+
+// ===== CONTROLS =====
+document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowUp' && dy===0){ dx=0; dy=-1; }
+    if(e.key==='ArrowDown' && dy===0){ dx=0; dy=1; }
+    if(e.key==='ArrowLeft' && dx===0){ dx=-1; dy=0; }
+    if(e.key==='ArrowRight' && dx===0){ dx=1; dy=0; }
+});
+
+showLeaderboard();
+</script>
+
+</body>
+</html>
