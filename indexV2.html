@@ -1,261 +1,679 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CyberSnake+</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon CyberSnake</title>
+    <style>
+        /* --- CSS Styles --- */
+        :root {
+            --theme-color: #39ff14; /* Dynamic Theme Color */
+            --theme-glow: rgba(57, 255, 20, 0.2);
+            --grid-line: rgba(57, 255, 20, 0.1);
+            
+            --neon-pink: #ff00ff;
+            --neon-blue: #00ffff;
+            --neon-orange: #ff5500;
+            --bg-color: #050505;
+        }
 
-<style>
-:root {
-    --neon-green: #39ff14;
-    --neon-blue: #00ffff;
-    --neon-pink: #ff00ff;
-    --bg-color: #050505;
-}
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--theme-color);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden; /* Prevent scrolling */
+            user-select: none; /* Prevent text selection */
+            touch-action: none; /* Prevent default touch actions */
+        }
 
-body {
-    margin:0;
-    background:var(--bg-color);
-    color:var(--neon-green);
-    font-family:Courier New;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 20px var(--theme-glow);
+            border: 2px solid var(--theme-color);
+            background-color: rgba(0, 0, 0, 0.8);
+        }
 
-#game-container {
-    position:relative;
-    border:2px solid var(--neon-green);
-    box-shadow:0 0 20px var(--neon-green);
-}
+        canvas {
+            display: block;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
 
-canvas {
-    display:block;
-    background:#000;
-}
+        /* UI Overlay */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-#menu-overlay {
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:#000;
-    padding:20px;
-    text-align:center;
-    border:1px solid var(--neon-green);
-}
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            text-shadow: 0 0 5px var(--theme-color);
+            font-weight: bold;
+        }
 
-.btn {
-    display:block;
-    margin:10px 0;
-    padding:10px;
-    border:2px solid var(--neon-green);
-    background:none;
-    color:var(--neon-green);
-    cursor:pointer;
-}
+        /* Menus (Start/Game Over) */
+        #menu-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(5, 5, 5, 0.95);
+            padding: 30px;
+            border: 1px solid var(--theme-color);
+            box-shadow: 0 0 15px var(--theme-color);
+            pointer-events: auto;
+            z-index: 10;
+            min-width: 280px;
+            border-radius: 4px;
+        }
 
-.btn:hover {
-    background:var(--neon-green);
-    color:#000;
-}
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
 
-#leaderboard {
-    margin-top:10px;
-}
-</style>
+        p {
+            margin: 10px 0;
+            color: #ccc;
+        }
+
+        /* Settings Menu */
+        .settings-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: var(--theme-color);
+        }
+
+        .retro-select {
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--theme-color);
+            border: 1px solid var(--theme-color);
+            padding: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            width: 130px;
+            text-transform: uppercase;
+        }
+
+        .retro-select option {
+            background: #000;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            background: transparent;
+            color: var(--theme-color);
+            border: 2px solid var(--theme-color);
+            padding: 10px 0;
+            font-size: 18px;
+            font-family: inherit;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            margin-top: 15px;
+            box-shadow: 0 0 5px var(--theme-color);
+        }
+
+        .btn:hover {
+            background: var(--theme-color);
+            color: #000;
+            box-shadow: 0 0 20px var(--theme-color);
+        }
+        
+        /* Share button specific style */
+        .btn-share {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+        .btn-share:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .mobile-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* Scanline effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.3;
+        }
+
+        @media (hover: none) {
+            .mobile-hint { display: block; }
+        }
+    </style>
 </head>
-
 <body>
 
-<div id="game-container">
-<canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div class="scanlines"></div>
 
-<div id="menu-overlay">
-<h1>CYBERSNAKE+</h1>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui-layer">
+            <div class="hud-top">
+                <div id="score-display">SCORE: 0</div>
+                <div id="high-score-display">HI: 0</div>
+            </div>
+        </div>
 
-<p>Difficulty</p>
-<button class="btn" onclick="setDifficulty('EASY')">EASY</button>
-<button class="btn" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
-<button class="btn" onclick="setDifficulty('HARD')">HARD</button>
+        <div id="menu-overlay">
+            <h1 id="menu-title">CYBERSNAKE</h1>
+            <p id="menu-msg">READY TO INITIALIZE?</p>
+            <p id="final-score" style="display:none; color: var(--neon-pink); font-weight:bold;"></p>
+            
+            <div class="settings-container" id="settings-panel">
+                <div class="setting-row">
+                    <label>DIFFICULTY:</label>
+                    <select id="difficulty-select" class="retro-select">
+                        <option value="150">EASY</option>
+                        <option value="100" selected>NORMAL</option>
+                        <option value="60">HARDCORE</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>THEME:</label>
+                    <select id="color-select" class="retro-select">
+                        <option value="#39ff14" selected>NEON GREEN</option>
+                        <option value="#00ffff">CYBER BLUE</option>
+                        <option value="#ff00ff">SYNTH PINK</option>
+                        <option value="#ff5500">PLASMA ORANGE</option>
+                    </select>
+                </div>
+            </div>
 
-<p>Theme</p>
-<button class="btn" onclick="setTheme('green')">GREEN</button>
-<button class="btn" onclick="setTheme('blue')">BLUE</button>
-<button class="btn" onclick="setTheme('pink')">PINK</button>
+            <button class="btn" id="start-btn">START SYSTEM</button>
+            <button class="btn btn-share" id="share-btn" style="display:none;">SHARE SCORE</button>
+            
+            <p class="mobile-hint">SWIPE TO MOVE • TAP TO PAUSE</p>
+            <p class="mobile-hint" style="font-size: 10px; margin-top: 5px;">[DESKTOP: ARROWS / WASD]</p>
+        </div>
+    </div>
 
-<button class="btn" onclick="startGame()">START</button>
+    <script>
+        /* --- Game Logic --- */
 
-<div id="leaderboard"></div>
-</div>
-</div>
+        // Setup Canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game-container');
+        
+        // UI Elements
+        const menuOverlay = document.getElementById('menu-overlay');
+        const startBtn = document.getElementById('start-btn');
+        const shareBtn = document.getElementById('share-btn');
+        const scoreDisplay = document.getElementById('score-display');
+        const highScoreDisplay = document.getElementById('high-score-display');
+        const menuTitle = document.getElementById('menu-title');
+        const menuMsg = document.getElementById('menu-msg');
+        const finalScoreMsg = document.getElementById('final-score');
+        const settingsPanel = document.getElementById('settings-panel');
+        const diffSelect = document.getElementById('difficulty-select');
+        const colorSelect = document.getElementById('color-select');
 
-<script>
-// ===== CANVAS =====
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+        // Game Constants
+        const GRID_SIZE = 20;
+        let TILE_COUNT_X = 20;
+        let TILE_COUNT_Y = 20;
+        let currentGameSpeed = 100; // Will be set by difficulty
+        
+        // Game State
+        let snake = [];
+        let food = { x: 0, y: 0 };
+        let bombs = [];
+        let velocity = { x: 0, y: 0 };
+        let nextVelocity = { x: 0, y: 0 }; 
+        let score = 0;
+        let highScore = localStorage.getItem('cyberSnakeHighScore') || 0;
+        let growthBuffer = 0; 
+        let gameInterval;
+        let isGameRunning = false;
+        let isPaused = false;
+        
+        // Particle Effects
+        let particles = [];
 
-const GRID = 20;
-const TILE = canvas.width / GRID;
+        // Initialization
+        highScoreDisplay.textContent = `HI: ${highScore}`;
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-// ===== DIFFICULTY =====
-const DIFFICULTY = {
-    EASY: 140,
-    MEDIUM: 100,
-    HARD: 70
-};
-let speed = DIFFICULTY.MEDIUM;
+        // Controls
+        document.addEventListener('keydown', handleKeyDown);
+        startBtn.addEventListener('click', startGame);
+        
+        // Update Live Theme when selector changes
+        colorSelect.addEventListener('change', updateThemeColors);
 
-function setDifficulty(level){
-    speed = DIFFICULTY[level];
-}
+        // Share Functionality
+        shareBtn.addEventListener('click', () => {
+            const text = `I scored ${score} on ${diffSelect.options[diffSelect.selectedIndex].text} mode in CyberSnake! Can you survive the glitch? 🐍💣`;
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&hashtags=CyberSnake,RetroGame,IndieDev`;
+            window.open(url, '_blank');
+        });
 
-// ===== THEME =====
-function setTheme(theme){
-    const root = document.documentElement;
+        // Touch Controls (Swipe)
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        canvas.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+            e.preventDefault(); 
+        }, {passive: false});
 
-    if(theme==='green') root.style.setProperty('--neon-green','#39ff14');
-    if(theme==='blue') root.style.setProperty('--neon-green','#00ffff');
-    if(theme==='pink') root.style.setProperty('--neon-green','#ff00ff');
-}
+        canvas.addEventListener('touchend', function(e) {
+            if (!isGameRunning) return;
+            
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+            e.preventDefault();
+        }, {passive: false});
 
-// ===== GAME STATE =====
-let snake, food, bombs, dx, dy, score, loop;
-let leaderboard = JSON.parse(localStorage.getItem('cyberSnakeLeaderboard')) || [];
-
-// ===== START =====
-function startGame(){
-    document.getElementById('menu-overlay').style.display='none';
-
-    snake = [{x:10,y:10}];
-    dx = 1; dy = 0;
-    score = 0;
-    bombs = [];
-
-    placeFood();
-    addBomb();
-    addBomb();
-
-    clearInterval(loop);
-    loop = setInterval(gameLoop, speed);
-}
-
-// ===== LOOP =====
-function gameLoop(){
-    update();
-    draw();
-}
-
-// ===== UPDATE =====
-function update(){
-    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-
-    head.x = (head.x + GRID) % GRID;
-    head.y = (head.y + GRID) % GRID;
-
-    // self collision
-    for(let s of snake){
-        if(s.x===head.x && s.y===head.y){
-            gameOver();
-            return;
+        // Helper to Convert HEX to RGB for CSS rgba() injection
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
         }
-    }
 
-    // bomb collision
-    for(let b of bombs){
-        if(b.x===head.x && b.y===head.y){
-            gameOver();
-            return;
+        function updateThemeColors() {
+            const themeHex = colorSelect.value;
+            const rgb = hexToRgb(themeHex);
+            
+            // Update CSS variables
+            document.documentElement.style.setProperty('--theme-color', themeHex);
+            if(rgb) {
+                document.documentElement.style.setProperty('--grid-line', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`);
+                document.documentElement.style.setProperty('--theme-glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`);
+            }
         }
-    }
 
-    snake.unshift(head);
+        function resizeCanvas() {
+            const maxWidth = window.innerWidth - 20;
+            const maxHeight = window.innerHeight - 20;
 
-    if(head.x===food.x && head.y===food.y){
-        score+=10;
-        placeFood();
-        addBomb();
-    } else {
-        snake.pop();
-    }
-}
+            let cols = Math.floor(maxWidth / GRID_SIZE);
+            let rows = Math.floor(maxHeight / GRID_SIZE);
 
-// ===== DRAW =====
-function draw(){
-    ctx.fillStyle="#000";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+            if (cols > 40) cols = 40;
+            if (rows > 30) rows = 30;
 
-    const color = getComputedStyle(document.documentElement)
-        .getPropertyValue('--neon-green');
+            canvas.width = cols * GRID_SIZE;
+            canvas.height = rows * GRID_SIZE;
+            
+            TILE_COUNT_X = cols;
+            TILE_COUNT_Y = rows;
 
-    ctx.fillStyle=color;
+            if (!isGameRunning) {
+                draw();
+            }
+        }
 
-    snake.forEach(s=>{
-        ctx.fillRect(s.x*TILE, s.y*TILE, TILE-2, TILE-2);
-    });
+        function startGame() {
+            updateThemeColors();
+            currentGameSpeed = parseInt(diffSelect.value);
 
-    // food
-    ctx.fillStyle="red";
-    ctx.fillRect(food.x*TILE, food.y*TILE, TILE-2, TILE-2);
+            menuOverlay.style.display = 'none';
+            resetGame();
+            isGameRunning = true;
+            isPaused = false;
+            gameInterval = setInterval(gameLoop, currentGameSpeed);
+        }
 
-    // bombs
-    ctx.fillStyle="orange";
-    bombs.forEach(b=>{
-        ctx.fillRect(b.x*TILE, b.y*TILE, TILE-2, TILE-2);
-    });
-}
+        function resetGame() {
+            const startX = Math.floor(TILE_COUNT_X / 2);
+            const startY = Math.floor(TILE_COUNT_Y / 2);
+            
+            snake = [
+                { x: startX, y: startY },
+                { x: startX, y: startY + 1 },
+                { x: startX, y: startY + 2 }
+            ];
+            
+            velocity = { x: 0, y: -1 }; 
+            nextVelocity = { x: 0, y: -1 };
+            
+            growthBuffer = 0;
+            score = 0;
+            bombs = [];
+            updateScore();
+            particles = [];
+            
+            // Initial items
+            placeFood();
+            addBomb();
+            addBomb();
+            addBomb();
+        }
 
-// ===== FOOD =====
-function placeFood(){
-    food = {
-        x: Math.floor(Math.random()*GRID),
-        y: Math.floor(Math.random()*GRID)
-    };
-}
+        function gameOver() {
+            isGameRunning = false;
+            clearInterval(gameInterval);
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('cyberSnakeHighScore', highScore);
+                highScoreDisplay.textContent = `HI: ${highScore}`;
+            }
 
-// ===== BOMBS =====
-function addBomb(){
-    bombs.push({
-        x: Math.floor(Math.random()*GRID),
-        y: Math.floor(Math.random()*GRID)
-    });
-}
+            menuTitle.textContent = "CRITICAL FAILURE";
+            menuTitle.style.color = "var(--neon-pink)";
+            menuTitle.style.textShadow = "0 0 10px var(--neon-pink)";
+            menuMsg.textContent = "SYSTEM TERMINATED";
+            
+            finalScoreMsg.style.display = "block";
+            finalScoreMsg.textContent = `DATA COLLECTED: ${score}`;
+            
+            settingsPanel.style.display = "flex"; // Re-show settings
+            startBtn.textContent = "REBOOT SYSTEM";
+            shareBtn.style.display = "block"; 
+            
+            menuOverlay.style.display = 'block';
+        }
 
-// ===== GAME OVER =====
-function gameOver(){
-    clearInterval(loop);
+        function gameLoop() {
+            if (isPaused) return;
+            update();
+            draw();
+        }
 
-    leaderboard.push(score);
-    leaderboard.sort((a,b)=>b-a);
-    leaderboard = leaderboard.slice(0,5);
+        function update() {
+            velocity = { ...nextVelocity };
+            let head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
 
-    localStorage.setItem('cyberSnakeLeaderboard', JSON.stringify(leaderboard));
+            // Wall Wrap
+            if (head.x < 0) head.x = TILE_COUNT_X - 1;
+            else if (head.x >= TILE_COUNT_X) head.x = 0;
 
-    showLeaderboard();
+            if (head.y < 0) head.y = TILE_COUNT_Y - 1;
+            else if (head.y >= TILE_COUNT_Y) head.y = 0;
 
-    document.getElementById('menu-overlay').style.display='block';
-}
+            // Self Collision
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
 
-// ===== LEADERBOARD =====
-function showLeaderboard(){
-    const board = document.getElementById('leaderboard');
+            // Bomb Collision
+            for (let bomb of bombs) {
+                if (head.x === bomb.x && head.y === bomb.y) {
+                    spawnParticles(head.x * GRID_SIZE + GRID_SIZE/2, head.y * GRID_SIZE + GRID_SIZE/2, '#ffaa00');
+                    gameOver();
+                    return;
+                }
+            }
 
-    board.innerHTML =
-        "<h3>TOP SCORES</h3>" +
-        leaderboard.map((s,i)=>`<p>${i+1}. ${s}</p>`).join('');
-}
+            snake.unshift(head);
 
-// ===== CONTROLS =====
-document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowUp' && dy===0){ dx=0; dy=-1; }
-    if(e.key==='ArrowDown' && dy===0){ dx=0; dy=1; }
-    if(e.key==='ArrowLeft' && dx===0){ dx=-1; dy=0; }
-    if(e.key==='ArrowRight' && dx===0){ dx=1; dy=0; }
-});
+            // Food Check
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                updateScore();
+                spawnParticles(food.x * GRID_SIZE + GRID_SIZE/2, food.y * GRID_SIZE + GRID_SIZE/2, '#ff0000');
+                
+                placeFood(); 
+                addBomb(); 
+                growthBuffer += 1;
+            } else {
+                if (growthBuffer > 0) {
+                    growthBuffer--; 
+                } else {
+                    snake.pop(); 
+                }
+            }
 
-showLeaderboard();
-</script>
+            updateParticles();
+        }
 
+        function draw() {
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.9)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const time = Date.now() * 0.01;
+            
+            // Draw Bombs
+            bombs.forEach(bomb => {
+                const bx = bomb.x * GRID_SIZE + GRID_SIZE/2;
+                const by = bomb.y * GRID_SIZE + GRID_SIZE/2;
+                const br = (GRID_SIZE/2) - 2;
+
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "#ff5500";
+                ctx.fillStyle = `hsl(${10 + Math.sin(time)*10}, 100%, 50%)`; 
+                ctx.beginPath();
+                ctx.arc(bx, by, br, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "#000";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(bx - 4, by - 4);
+                ctx.lineTo(bx + 4, by + 4);
+                ctx.moveTo(bx + 4, by - 4);
+                ctx.lineTo(bx - 4, by + 4);
+                ctx.stroke();
+            });
+
+            // Draw Food (Apple)
+            const cx = food.x * GRID_SIZE + GRID_SIZE / 2;
+            const cy = food.y * GRID_SIZE + GRID_SIZE / 2;
+            const r = (GRID_SIZE / 2) - 2;
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ff0000";
+            ctx.fillStyle = "#ff0000";
+            ctx.beginPath();
+            ctx.arc(cx, cy + 1, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "var(--theme-color)"; 
+            ctx.fillRect(cx - 1, cy - r - 3, 2, 5);
+
+            // Draw Snake
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "var(--theme-color)";
+            
+            snake.forEach((segment, index) => {
+                // Head is white for sharp contrast, body uses the theme color
+                if (index === 0) ctx.fillStyle = "#ffffff"; 
+                else ctx.fillStyle = "var(--theme-color)";
+                
+                ctx.fillRect(
+                    segment.x * GRID_SIZE + 1, 
+                    segment.y * GRID_SIZE + 1, 
+                    GRID_SIZE - 2, 
+                    GRID_SIZE - 2
+                );
+            });
+
+            drawParticles(ctx);
+            ctx.shadowBlur = 0;
+        }
+
+        function placeFood() {
+            let valid = false;
+            while (!valid) {
+                food.x = Math.floor(Math.random() * TILE_COUNT_X);
+                food.y = Math.floor(Math.random() * TILE_COUNT_Y);
+                valid = true;
+                for (let part of snake) {
+                    if (part.x === food.x && part.y === food.y) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if(valid) {
+                    for(let bomb of bombs) {
+                        if(bomb.x === food.x && bomb.y === food.y) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function addBomb() {
+            let valid = false;
+            let bx, by;
+            let attempts = 0;
+            
+            while (!valid && attempts < 50) {
+                bx = Math.floor(Math.random() * TILE_COUNT_X);
+                by = Math.floor(Math.random() * TILE_COUNT_Y);
+                valid = true;
+                
+                for (let part of snake) {
+                    if (part.x === bx && part.y === by) valid = false;
+                }
+                if (food.x === bx && food.y === by) valid = false;
+                for (let bomb of bombs) {
+                    if (bomb.x === bx && bomb.y === by) valid = false;
+                }
+                
+                const head = snake[0];
+                if (head && Math.abs(head.x - bx) < 3 && Math.abs(head.y - by) < 3) valid = false;
+
+                attempts++;
+            }
+            if (valid) bombs.push({ x: bx, y: by });
+        }
+
+        function updateScore() {
+            scoreDisplay.textContent = `SCORE: ${score}`;
+        }
+
+        function handleKeyDown(e) {
+            if (e.code === 'Space') {
+                if (isGameRunning) isPaused = !isPaused;
+                else if (menuOverlay.style.display !== 'none' && shareBtn.style.display === 'none') startGame();
+                e.preventDefault();
+                return;
+            }
+
+            if (!isGameRunning || isPaused) return;
+
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W':
+                    if (velocity.y === 0) nextVelocity = { x: 0, y: -1 }; break;
+                case 'ArrowDown': case 's': case 'S':
+                    if (velocity.y === 0) nextVelocity = { x: 0, y: 1 }; break;
+                case 'ArrowLeft': case 'a': case 'A':
+                    if (velocity.x === 0) nextVelocity = { x: -1, y: 0 }; break;
+                case 'ArrowRight': case 'd': case 'D':
+                    if (velocity.x === 0) nextVelocity = { x: 1, y: 0 }; break;
+            }
+        }
+
+        function handleSwipe(startX, startY, endX, endY) {
+            const dx = endX - startX;
+            const dy = endY - startY;
+            if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                isPaused = !isPaused;
+                return;
+            }
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) { if (velocity.x === 0) nextVelocity = { x: 1, y: 0 }; } 
+                else { if (velocity.x === 0) nextVelocity = { x: -1, y: 0 }; }
+            } else {
+                if (dy > 0) { if (velocity.y === 0) nextVelocity = { x: 0, y: 1 }; } 
+                else { if (velocity.y === 0) nextVelocity = { x: 0, y: -1 }; }
+            }
+        }
+
+        function spawnParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                p.life -= 0.05;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function drawParticles(ctx) {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 3, 3);
+            });
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Initial Draw
+        draw();
+    </script>
 </body>
 </html>
